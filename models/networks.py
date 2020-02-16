@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .base import *
-from .factory import NetworkFactory
+from .factory import *
+from .base_factory import *
 
 
 class UNet(nn.Module):
@@ -92,90 +93,80 @@ class ResNet(nn.Module):
 class ConvNetworkFactory(NetworkFactory):
 
     def __init__(self):
+        super(ConvNetworkFactory, self).__init__()
+
         self.exists_model_name = ["ConvNet", "UNet", "ResNet",
                                   "Conv2dBlock", "ConvTanspose2dBlock", "ResnetBlock"]
 
-    def define_model(self, param, in_channels, out_channels):
-        result = []
+    def define(self, param, in_channels, out_channels):
+        module_type = param["type"]
+
+        if module_type not in self.exists_model_name:
+            raise RuntimeError("module not exists!")
+
+        factor = param["factor"] if "factor" in param else 2
+        sub_in_channels = param["in_channels"] if "in_channels" in param else in_channels
+        sub_out_channels = param["out_channels"] if "out_channels" in param else out_channels
+        inner_channels = param["inner_channels"] if "inner_channels" in param else 128
+        num_inner_layers = param["num_inner_layers"] if "num_inner_layers" in param else 3
+        num_layers = param["num_layers"] if "num_layers" in param else 2
+        num_res_blocks = param["num_res_blocks"] if "num_res_blocks" in param else 3
+        kernel_size = param["kernel_size"] if "kernel_size" in param else 3
+        stride = param["stride"] if "stride" in param else 1
+        padding = param["padding"] if "padding" in param else 0
+        output_padding = param["output_padding"] if "output_padding" in param else 0
+        norm = param["norm"] if "norm" in param else 1
+        inner_activation = param["inner_activation"] if "inner_activation" in param else "BatchNorm2d"
+        activation = param["activation"] if "activation" in param else "PReLu"
+        dropout = param["dropout"] if "dropout" in param else 0
+        padtype = param["padtype"] if "padtype" in param else "replicate"
+
+        if module_type == "ConvNet":
+            return ConvNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
+                                        padding, factor, num_inner_layers, dropout, norm, activation, inner_activation)])
+        elif module_type == "UNet":
+            return UNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
+                                    padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, padtype)])
+        elif module_type == "ResNet":
+            return ResNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
+                                        padding, factor, num_layers, num_res_blocks, dropout, norm, activation, inner_activation, padtype)])
+        elif module_type == "Conv2dBlock":
+            return Conv2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, dropout,  norm, activation)])
+        elif module_type == "ConvTanspose2dBlock":
+            return ConvTranspose2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, output_padding, dropout, norm, activation)])
+        elif module_type == "ResNetBlock":
+            return ResNetBlock(sub_in_channels, sub_out_channels, norm, activation,
+                                            inner_activation, padtype)])
+
+
+class ConvArchitectFactory(BaseArchitectFactory):
+
+    def __init__(self):
+        super(ConvNetworkFactory, self).__init__()
+        self.conv_network_factory=ConvNetworkFactory()
+
+    def define_network(self, param):
+        result=[]
         for key in param.keys():
-            module_type = param[key]["type"]
-            if module_type in self.exists_model_name:
-
-                id = param[key]["id"]
-
-                factor = param[key]["factor"] if "factor" in param[key] else 2
-                sub_in_channels = param[key]["in_channels"] if "in_channels" in param[key] else in_channels
-                sub_out_channels = param[key]["out_channels"] if "out_channels" in param[key] else out_channels
-                inner_channels = param[key]["inner_channels"] if "inner_channels" in param[key] else 128
-                num_inner_layers = param[key]["num_inner_layers"] if "num_inner_layers" in param[key] else 3
-                num_layers = param[key]["num_layers"] if "num_layers" in param[key] else 2
-                num_res_blocks = param[key]["num_res_blocks"] if "num_res_blocks" in param[key] else 3
-                kernel_size = param[key]["kernel_size"] if "kernel_size" in param[key] else 3
-                stride = param[key]["stride"] if "stride" in param[key] else 1
-                padding = param[key]["padding"] if "padding" in param[key] else 0
-                output_padding = param[key]["output_padding"] if "output_padding" in param[key] else 0
-                norm = param[key]["norm"] if "norm" in param[key] else 1
-                inner_activation = param[key]["inner_activation"] if "inner_activation" in param[key] else "BatchNorm2d"
-                activation = param[key]["activation"] if "activation" in param[key] else "PReLu"
-                dropout = param[key]["dropout"] if "dropout" in param[key] else 0
-                padtype = param[key]["padtype"] if "padtype" in param[key] else "replicate"
-
-                if module_type == "ConvNet":
-                    result.append([id, ConvNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                                               padding, factor, num_inner_layers, dropout, norm, activation, inner_activation)])
-                elif module_type == "UNet":
-                    result.append([id, UNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                                            padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, padtype)])
-                elif module_type == "ResNet":
-                    result.append([id, ResNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                                              padding, factor, num_layers, num_res_blocks, dropout, norm, activation, inner_activation, padtype)])
-                elif module_type == "Conv2dBlock":
-                    result.append(
-                        [id, Conv2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, dropout,  norm, activation)])
-                elif module_type == "ConvTanspose2dBlock":
-                    result.append(
-                        [id, ConvTranspose2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, output_padding, dropout, norm, activation)])
-                elif module_type == "ResNetBlock":
-                    result.append([id, ResNetBlock(sub_in_channels, sub_out_channels, norm, activation,
-                                                   inner_activation, padtype)])
+            id=param[key]["id"]
+            module_type=param[key]["type"]
+            if module_type in self.network_factory.exists_model_name:
+                result.append([id, self.network_factory.define(param)])
+            elif module_type in self.conv_network_factory.exists_model_name:
+                result.append([id, self.conv_network_factory.define(param)])
             else:
                 raise RuntimeError("module not exists!")
         result.sort(key=lambda x: x[0])
-        result = [d[1] for d in result]
-        result = nn.Sequential(*result)
-        return result
+        result=[r[1] for r in result]
+        return nn.Sequential(*result)
 
-    def define_optimizer(self, param, parameters):
-        if param["training_type"] == "Adam":
-            lr = param["lr"] if "lr" in param else 0.001
-            beta1 = param["beta1"] if "beta1" in param else 0.5
-            beta2 = param["beta2"] if "beta2" in param else 0.999
-            optimizer = torch.optim.Adam(parameters,
-                                         lr=param["lr"], betas=(beta1, beta2))
-        elif param["training_type"] == "SGD":
-            lr = param["lr"] if "lr" in param else 0.001
-            momentum = param["momentum"] if "momentum" in param else 0.5
-            optimizer = torch.optim.SGD(
-                parameters, lr=lr, momentum=momentum)
-        else:
-            optimizer = None
-        return optimizer
 
-    def define_loss(self, loss_type):
-        if loss_type == "BCELoss":
-            return nn.BCELoss()
-        elif loss_type == "L1Loss":
-            return nn.L1Loss()
-        elif loss_type == "MSELoss":
-            return nn.MSELoss()
-        else:
-            return None
 
 
 def set_requires_grad(nets, requires_grad=False):
     if not isinstance(nets, list):
-        nets = [nets]
+        nets=[nets]
     for net in nets:
         if net is not None:
             for param in net.parameters():
-                param.requires_grad = requires_grad
+                param.requires_grad=requires_grad

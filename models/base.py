@@ -67,7 +67,7 @@ class Conv2dBlock(nn.Module):
 
         if dropout:
             self.network.add_module("Dropout", nn.Dropout(dropout))
-        
+
     def forward(self, x):
         return self.network(x)
 
@@ -147,3 +147,16 @@ class ResnetBlock(nn.Module):
     def forward(self, x):
         out = self.network(x)
         return out+x
+
+
+class Interpolate(nn.Module):
+
+    def __init__(self, size=None, scale_factor=None, mode='nearest', align_corners=None):
+        super(Interpolate, self).__init__()
+        self.size = size
+        self.scale_factor = scale_factor
+        self.mode = mode
+        self.align_corners = align_corners
+
+    def forward(self, x):
+        return F.interpolate(x, self.size, self.scale_factor, self.mode, self.align_corners)
