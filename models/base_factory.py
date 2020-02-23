@@ -9,7 +9,8 @@ class BaseNetworkFactory(NetworkFactory):
     def __init__(self):
         super(BaseNetworkFactory, self).__init__()
         self.exists_model_name = ["Linear", "Flatten", "Conv2d", "ConvTranspose2d", "Dropout", "Dropout2d", "BatchNorm1d",
-                                  "BatchNorm2d", "InstanceNorm1d", "InstanceNorm2d", "ReflectionPad2d", "ReplicationPad2d", "Interpolate"]
+                                  "BatchNorm2d", "InstanceNorm1d", "InstanceNorm2d", "ReflectionPad2d", "ReplicationPad2d",
+                                  "ZeroPad2d", "Interpolate"]
 
     def define(self, param):
         module_type = param["type"]
@@ -62,6 +63,9 @@ class BaseNetworkFactory(NetworkFactory):
         elif module_type == "ReplicationPad2d":
             padding = param["padding"]
             return nn.ReplicationPad2d(padding)
+        elif module_type == "ZeroPad2d":
+            padding = param["padding"]
+            return nn.ZeroPad2d(padding)
         elif module_type == "Interpolate":
             size = param["size"] if "size" in param else None
             scale_factor = param["scale_factor"] if "scale_factor" in param else None
@@ -73,7 +77,7 @@ class BaseNetworkFactory(NetworkFactory):
 class BaseLossFactory(LossFactory):
 
     def __init__(self):
-        super(ConvLossFactory, self).__init__()
+        super(BaseLossFactory, self).__init__()
         self.exists_loss_name = ["BCELoss", "L1Loss", "MSELoss"]
 
     def define(self, loss_type):
@@ -91,6 +95,7 @@ class BaseLossFactory(LossFactory):
 class BaseOptimizerFactory(OptimizerFactory):
 
     def __init__(self):
+        super(BaseOptimizerFactory, self).__init__()
         self.exists_optimizer_name = ["Adam", "SGD"]
 
     def define(self, param, parameters):
@@ -113,7 +118,7 @@ class BaseOptimizerFactory(OptimizerFactory):
 
 class BaseArchitectFactory(ArchitectFactory):
 
-    def __init__(self, network_factory=BaseNetworkFactory(), optmizer_factory=BaseOptimizerFactory(), loss_factory=BaseLossFactory):
+    def __init__(self, network_factory=BaseNetworkFactory(), optmizer_factory=BaseOptimizerFactory(), loss_factory=BaseLossFactory()):
         super(BaseArchitectFactory, self).__init__()
         self.network_factory = network_factory
         self.optimizer_factor = optmizer_factory

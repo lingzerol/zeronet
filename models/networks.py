@@ -115,58 +115,57 @@ class ConvNetworkFactory(NetworkFactory):
         stride = param["stride"] if "stride" in param else 1
         padding = param["padding"] if "padding" in param else 0
         output_padding = param["output_padding"] if "output_padding" in param else 0
-        norm = param["norm"] if "norm" in param else 1
-        inner_activation = param["inner_activation"] if "inner_activation" in param else "BatchNorm2d"
-        activation = param["activation"] if "activation" in param else "PReLu"
+        norm = param["norm"] if "norm" in param else None
+        inner_activation = param["inner_activation"] if "inner_activation" in param else None
+        activation = param["activation"] if "activation" in param else None
         dropout = param["dropout"] if "dropout" in param else 0
         padtype = param["padtype"] if "padtype" in param else "replicate"
 
         if module_type == "ConvNet":
             return ConvNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                                        padding, factor, num_inner_layers, dropout, norm, activation, inner_activation)])
+                           padding, factor, num_inner_layers, dropout, norm, activation, inner_activation)
         elif module_type == "UNet":
             return UNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                                    padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, padtype)])
+                        padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, padtype)
         elif module_type == "ResNet":
             return ResNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                                        padding, factor, num_layers, num_res_blocks, dropout, norm, activation, inner_activation, padtype)])
+                          padding, factor, num_layers, num_res_blocks, dropout, norm, activation, inner_activation, padtype)
         elif module_type == "Conv2dBlock":
-            return Conv2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, dropout,  norm, activation)])
+            return Conv2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, dropout,  norm, activation)
         elif module_type == "ConvTanspose2dBlock":
-            return ConvTranspose2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, output_padding, dropout, norm, activation)])
+            return ConvTranspose2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, output_padding, dropout, norm, activation)
         elif module_type == "ResNetBlock":
             return ResNetBlock(sub_in_channels, sub_out_channels, norm, activation,
-                                            inner_activation, padtype)])
+                               inner_activation, padtype)
 
 
 class ConvArchitectFactory(BaseArchitectFactory):
 
     def __init__(self):
-        super(ConvNetworkFactory, self).__init__()
-        self.conv_network_factory=ConvNetworkFactory()
+        super(ConvArchitectFactory, self).__init__()
+        self.conv_network_factory = ConvNetworkFactory()
 
-    def define_network(self, param):
-        result=[]
+    def define_network(self, param, in_channels=None, out_channels=None):
+        result = []
         for key in param.keys():
-            id=param[key]["id"]
-            module_type=param[key]["type"]
+            id = param[key]["id"]
+            module_type = param[key]["type"]
             if module_type in self.network_factory.exists_model_name:
-                result.append([id, self.network_factory.define(param)])
+                result.append([id, self.network_factory.define(param[key])])
             elif module_type in self.conv_network_factory.exists_model_name:
-                result.append([id, self.conv_network_factory.define(param)])
+                result.append([id, self.conv_network_factory.define(
+                    param[key], in_channels, out_channels)])
             else:
                 raise RuntimeError("module not exists!")
         result.sort(key=lambda x: x[0])
-        result=[r[1] for r in result]
+        result = [r[1] for r in result]
         return nn.Sequential(*result)
-
-
 
 
 def set_requires_grad(nets, requires_grad=False):
     if not isinstance(nets, list):
-        nets=[nets]
+        nets = [nets]
     for net in nets:
         if net is not None:
             for param in net.parameters():
-                param.requires_grad=requires_grad
+                param.requires_grad = requires_grad

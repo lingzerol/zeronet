@@ -43,7 +43,7 @@ class Conv2dBlock(nn.Module):
         super(Conv2dBlock, self).__init__()
         self.network = nn.Sequential()
 
-        self.network.add_module("ConvTranspose2d", nn.Conv2d(
+        self.network.add_module("Conv2d", nn.Conv2d(
             in_channels, out_channels, kernel_size, stride=stride, padding=padding))
 
         if norm == "BatchNorm2d":
