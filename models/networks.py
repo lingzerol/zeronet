@@ -58,6 +58,29 @@ class ConvNet(nn.Module):
         return self.network(x)
 
 
+class ConvTransposeNet(nn.Module):
+
+    def __init__(self, in_channels, out_channels, inner_channels, kernel_size, stride=1,
+                 padding=0, output_padding=0, factor=2, num_inner_layers=3, dropout=0.5, norm="BatchNorm2d",
+                 activation="Tanh", inner_activation="PReLu"):
+        super(ConvTransposeNet, self).__init__()
+
+        self.network = nn.Sequential()
+
+        self.network.add_module("input_ConvTranspose", ConvTranspose2dBlock(
+            in_channels, inner_channels, kernel_size, stride, padding, output_padding, dropout, norm, inner_activation))
+
+        for i in range(num_inner_layers):
+            self.network.add_module("inner_ConvTranspose_%d" % (i), ConvTranspose2dBlock(
+                inner_channels, inner_channels*factor,  kernel_size, stride, padding, output_padding, dropout, norm, inner_activation))
+            inner_channels *= factor
+        self.network.add_module("output_ConvTranspose", ConvTranspose2dBlock(
+            inner_channels, out_channels, kernel_size, stride, padding, output_padding, 0, None, activation))
+
+    def forward(self, x):
+        return self.network(x)
+
+
 class ResNet(nn.Module):
 
     def __init__(self, in_channels, out_channels, inner_channels, kernel_size, stride=1,
@@ -95,7 +118,7 @@ class ConvNetworkFactory(NetworkFactory):
     def __init__(self):
         super(ConvNetworkFactory, self).__init__()
 
-        self.exists_model_name = ["ConvNet", "UNet", "ResNet",
+        self.exists_model_name = ["ConvNet", "ConvTransposeNet", "UNet", "ResNet",
                                   "Conv2dBlock", "ConvTanspose2dBlock", "ResnetBlock"]
 
     def define(self, param, in_channels, out_channels):
@@ -124,6 +147,9 @@ class ConvNetworkFactory(NetworkFactory):
         if module_type == "ConvNet":
             return ConvNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
                            padding, factor, num_inner_layers, dropout, norm, activation, inner_activation)
+        elif module_type == "ConvTransposeNet":
+            return ConvTransposeNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
+                                   padding, output_padding, factor, num_inner_layers, dropout, norm, activation, inner_activation)
         elif module_type == "UNet":
             return UNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
                         padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, padtype)
