@@ -16,15 +16,15 @@ class UNet(nn.Module):
         self.network = None
 
         inner_channels = inner_channels*(factor**num_inner_layers)
-        self.network = UNetBlock(inner_channels, inner_channels//factor,
+        self.network = UNetBlock(inner_channels, int(inner_channels/factor),
                                  kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
                                  innermost=True, norm=norm, activation=inner_activation, inner_activation=inner_activation, padtype=padtype)
-        inner_channels //= factor
+        inner_channels = int(inner_channels/factor)
         for _ in range(num_inner_layers-1):
-            self.network = UNetBlock(inner_channels, inner_channels//factor,
+            self.network = UNetBlock(inner_channels, int(inner_channels/factor),
                                      kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
                                      subblock=self.network, norm=norm, activation=inner_activation, inner_activation=inner_activation, padtype=padtype)
-            inner_channels //= factor
+            inner_channels = int(inner_channels/factor)
 
         self.network = UNetBlock(inner_channels, out_channels,
                                  kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
@@ -49,8 +49,8 @@ class ConvNet(nn.Module):
 
         for i in range(num_inner_layers):
             self.network.add_module("inner_Conv_%d" % (i), Conv2dBlock(
-                inner_channels, inner_channels*factor,  kernel_size, stride, padding, dropout, norm, inner_activation))
-            inner_channels *= factor
+                inner_channels, int(inner_channels*factor),  kernel_size, stride, padding, dropout, norm, inner_activation))
+            inner_channels = int(inner_channels*factor)
         self.network.add_module("output_Conv", Conv2dBlock(
             inner_channels, out_channels, kernel_size, stride, padding, 0, None, activation))
 
@@ -68,14 +68,14 @@ class ConvTransposeNet(nn.Module):
         self.network = nn.Sequential()
 
         self.network.add_module("input_ConvTranspose", ConvTranspose2dBlock(
-            in_channels, inner_channels, kernel_size, stride, padding, output_padding, dropout, norm, inner_activation))
+            in_channels, inner_channels, kernel_size, stride, padding, output_padding, 0, norm, inner_activation))
 
         for i in range(num_inner_layers):
             self.network.add_module("inner_ConvTranspose_%d" % (i), ConvTranspose2dBlock(
-                inner_channels, inner_channels*factor,  kernel_size, stride, padding, output_padding, dropout, norm, inner_activation))
-            inner_channels *= factor
+                inner_channels, int(inner_channels*factor),  kernel_size, stride, padding, output_padding, dropout, norm, inner_activation))
+            inner_channels = int(inner_channels*factor)
         self.network.add_module("output_ConvTranspose", ConvTranspose2dBlock(
-            inner_channels, out_channels, kernel_size, stride, padding, output_padding, 0, None, activation))
+            inner_channels, out_channels, kernel_size, stride, padding, output_padding, dropout, None, activation))
 
     def forward(self, x):
         return self.network(x)
@@ -94,18 +94,18 @@ class ResNet(nn.Module):
 
         ngf = inner_channels
         for i in range(num_layers-1):
-            self.network.add_module("Conv2dBlock_%d" % (i), Conv2dBlock(ngf, ngf*factor, kernel_size=kernel_size,
+            self.network.add_module("Conv2dBlock_%d" % (i), Conv2dBlock(ngf, int(ngf*factor), kernel_size=kernel_size,
                                                                         stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
-            ngf *= factor
+            ngf = int(ngf*factor)
 
         for i in range(num_res_blocks):
             self.network.add_module("ResBlock_%d" % (i), ResnetBlock(ngf, norm=norm, activation=inner_activation,
                                                                      inner_activation=inner_activation, padtype=padtype))
 
         for i in range(num_layers-1):
-            self.network.add_module("ConvTranspose2dBlock_%d" % (i), ConvTranspose2dBlock(ngf, ngf//factor, kernel_size=kernel_size,
+            self.network.add_module("ConvTranspose2dBlock_%d" % (i), ConvTranspose2dBlock(ngf, int(ngf/factor), kernel_size=kernel_size,
                                                                                           stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
-            ngf //= factor
+            ngf = int(ngf/factor)
         self.network.add_module("out_ConvTranspose2dBlock", ConvTranspose2dBlock(inner_channels, out_channels, kernel_size=kernel_size,
                                                                                  stride=stride, padding=padding, dropout=0, norm=None, activation=activation))
 
@@ -149,7 +149,7 @@ class ConvNetworkFactory(NetworkFactory):
                            padding, factor, num_inner_layers, dropout, norm, activation, inner_activation)
         elif module_type == "ConvTransposeNet":
             return ConvTransposeNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                                   padding, output_padding, factor, num_inner_layers, dropout, norm, activation, inner_activation)
+                                    padding, output_padding, factor, num_inner_layers, dropout, norm, activation, inner_activation)
         elif module_type == "UNet":
             return UNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
                         padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, padtype)

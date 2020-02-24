@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .factory import *
+from .base import *
 
 
 class BaseNetworkFactory(NetworkFactory):
@@ -10,7 +11,7 @@ class BaseNetworkFactory(NetworkFactory):
         super(BaseNetworkFactory, self).__init__()
         self.exists_model_name = ["Linear", "Flatten", "Conv2d", "ConvTranspose2d", "Dropout", "Dropout2d", "BatchNorm1d",
                                   "BatchNorm2d", "InstanceNorm1d", "InstanceNorm2d", "ReflectionPad2d", "ReplicationPad2d",
-                                  "ZeroPad2d", "Interpolate"]
+                                  "ZeroPad2d", "Interpolate", "Reshape", "Sigmoid", "PReLu", "LeakyReLu", "ReLu", "Tanh"]
 
     def define(self, param):
         module_type = param["type"]
@@ -70,8 +71,25 @@ class BaseNetworkFactory(NetworkFactory):
             size = param["size"] if "size" in param else None
             scale_factor = param["scale_factor"] if "scale_factor" in param else None
             mode = param["mode"] if "mode" in param else "nearest"
-            align_corners = param["padding"] if "align_corners" in param else None
+            align_corners = param["align_corners"] if "align_corners" in param else None
             return Interpolate(size, scale_factor, mode, align_corners)
+        elif module_type == "Reshape":
+            reshape_size = param["reshape_size"]
+            return Reshape(reshape_size)
+        elif module_type == "Sigmoid":
+            return nn.Sigmoid()
+        elif module_type == "PReLu":
+            num_parameters = param["num_parameters"] if "num_parameters" in param else 1
+            init = param["init"] if "init" in param else 0.25
+            return nn.PReLU(num_parameters, init)
+        elif module_type == "LeakyReLu":
+            negative_slope = param["negative_slope"] if "negative_slope" in param else 1e-2
+            inplace = param["inplace"] if "inplace" in param else False
+            return nn.LeakyReLU(negative_slope, inplace)
+        elif module_type == "ReLu":
+            return nn.ReLU()
+        elif module_type == "Tanh":
+            return nn.Tanh()
 
 
 class BaseLossFactory(LossFactory):
