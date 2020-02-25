@@ -90,6 +90,7 @@ class BaseNetworkFactory(NetworkFactory):
             return nn.ReLU()
         elif module_type == "Tanh":
             return nn.Tanh()
+            
 
 
 class BaseLossFactory(LossFactory):
