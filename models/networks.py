@@ -15,7 +15,7 @@ class UNet(nn.Module):
         super(UNet, self).__init__()
         self.network = None
 
-        inner_channels = inner_channels*(factor**num_inner_layers)
+        inner_channels = int(inner_channels*(factor**num_inner_layers))
         self.network = UNetBlock(inner_channels, int(inner_channels/factor),
                                  kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
                                  innermost=True, norm=norm, activation=inner_activation, inner_activation=inner_activation, padtype=padtype)
