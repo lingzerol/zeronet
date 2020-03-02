@@ -119,7 +119,7 @@ class ConvNetworkFactory(NetworkFactory):
         super(ConvNetworkFactory, self).__init__()
 
         self.exists_model_name = ["ConvNet", "ConvTransposeNet", "UNet", "ResNet",
-                                  "Conv2dBlock", "ConvTanspose2dBlock", "ResnetBlock"]
+                                  "Conv2dBlock", "ConvTranspose2dBlock", "ResnetBlock"]
 
     def define(self, param, in_channels, out_channels):
         module_type = param["type"]
@@ -158,7 +158,7 @@ class ConvNetworkFactory(NetworkFactory):
                           padding, factor, num_layers, num_res_blocks, dropout, norm, activation, inner_activation, padtype)
         elif module_type == "Conv2dBlock":
             return Conv2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, dropout,  norm, activation)
-        elif module_type == "ConvTanspose2dBlock":
+        elif module_type == "ConvTranspose2dBlock":
             return ConvTranspose2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, output_padding, dropout, norm, activation)
         elif module_type == "ResNetBlock":
             return ResNetBlock(sub_in_channels, sub_out_channels, norm, activation,
