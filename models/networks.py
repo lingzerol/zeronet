@@ -85,7 +85,7 @@ class ResNet(nn.Module):
 
     def __init__(self, in_channels, out_channels, inner_channels, kernel_size, stride=1,
                  padding=0, factor=2, num_layers=2, num_res_blocks=3, dropout=0.5, norm="BatchNorm2d",
-                 activation="Tanh", inner_activation="PReLu", padtype="replicate"):
+                 activation="Tanh", inner_activation="PReLu", padtype="replicate", mode="BottleNeck"):
         super(ResNet, self).__init__()
 
         self.network = nn.Sequential()
@@ -100,7 +100,7 @@ class ResNet(nn.Module):
 
         for i in range(num_res_blocks):
             self.network.add_module("ResBlock_%d" % (i), ResnetBlock(ngf, norm=norm, activation=inner_activation,
-                                                                     inner_activation=inner_activation, padtype=padtype))
+                                                                     inner_activation=inner_activation, padtype=padtype, mode=mode))
 
         for i in range(num_layers-1):
             self.network.add_module("ConvTranspose2dBlock_%d" % (i), ConvTranspose2dBlock(ngf, int(ngf/factor), kernel_size=kernel_size,
@@ -143,6 +143,7 @@ class ConvNetworkFactory(NetworkFactory):
         activation = param["activation"] if "activation" in param else None
         dropout = param["dropout"] if "dropout" in param else 0
         padtype = param["padtype"] if "padtype" in param else "replicate"
+        mode = param["mode"] if "mode" in param else "BottleNeck"
 
         if module_type == "ConvNet":
             return ConvNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
@@ -155,14 +156,14 @@ class ConvNetworkFactory(NetworkFactory):
                         padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, padtype)
         elif module_type == "ResNet":
             return ResNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                          padding, factor, num_layers, num_res_blocks, dropout, norm, activation, inner_activation, padtype)
+                          padding, factor, num_layers, num_res_blocks, dropout, norm, activation, inner_activation, padtype, mode=mode)
         elif module_type == "Conv2dBlock":
             return Conv2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, dropout,  norm, activation)
         elif module_type == "ConvTranspose2dBlock":
             return ConvTranspose2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, output_padding, dropout, norm, activation)
         elif module_type == "ResNetBlock":
             return ResNetBlock(sub_in_channels, sub_out_channels, norm, activation,
-                               inner_activation, padtype)
+                               inner_activation, padtype, mode=mode)
 
 
 class ConvArchitectFactory(BaseArchitectFactory):
