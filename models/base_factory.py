@@ -145,6 +145,9 @@ class BaseArchitectFactory(ArchitectFactory):
         self.optimizer_factor = optmizer_factory
         self.loss_factory = loss_factory
 
+    def define_single_network(self, param):
+        return self.network_factory.define(param)
+
     def define_network(self, param):
         result = []
         for key in param.keys():

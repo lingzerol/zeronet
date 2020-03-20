@@ -23,6 +23,9 @@ class LossFactory(ABC):
 
 
 class ArchitectFactory(ABC):
+    @abstractmethod
+    def define_single_network(self, param):
+        pass
 
     @abstractmethod
     def define_network(self, *args):

@@ -13,26 +13,33 @@ class UNet(nn.Module):
                  padding=0, factor=2, num_inner_layers=3, dropout=0.5, norm="BatchNorm2d", activation="Tanh",
                  inner_activation="PReLu", padtype="replicate"):
         super(UNet, self).__init__()
-        self.network = None
+        self.networks = []
 
         inner_channels = int(inner_channels*(factor**num_inner_layers))
-        self.network = UNetBlock(inner_channels, int(inner_channels/factor),
-                                 kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
-                                 innermost=True, norm=norm, activation=inner_activation, inner_activation=inner_activation, padtype=padtype)
+        self.networks.append(UNetBlock(inner_channels, int(inner_channels/factor),
+                                       kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
+                                       innermost=True, norm=norm, activation=inner_activation, inner_activation=inner_activation, padtype=padtype))
         inner_channels = int(inner_channels/factor)
         for _ in range(num_inner_layers-1):
-            self.network = UNetBlock(inner_channels, int(inner_channels/factor),
-                                     kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
-                                     subblock=self.network, norm=norm, activation=inner_activation, inner_activation=inner_activation, padtype=padtype)
+            self.networks.append(UNetBlock(inner_channels, int(inner_channels/factor),
+                                           kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
+                                           subblock=self.networks[-1], norm=norm, activation=inner_activation, inner_activation=inner_activation, padtype=padtype))
             inner_channels = int(inner_channels/factor)
 
-        self.network = UNetBlock(inner_channels, out_channels,
-                                 kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
-                                 input_nc=in_channels, outermost=True, subblock=self.network, norm=None,
-                                 activation=activation, inner_activation=inner_activation, padtype=padtype)
+        self.networks.append(UNetBlock(inner_channels, out_channels,
+                                       kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
+                                       input_nc=in_channels, outermost=True, subblock=self.networks[-1], norm=None,
+                                       activation=activation, inner_activation=inner_activation, padtype=padtype))
+        self.add_module("Unet", self.networks[-1])
 
-    def forward(self, x):
-        return self.network(x)
+    def forward(self, x, layer=None):
+        if layer is not None and layer < len(self.networks):
+            return self.networks[layer](x)
+        else:
+            return self.networks[-1](x)
+
+    def __len__(self):
+        return len(self.networks)
 
 
 class ConvNet(nn.Module):
@@ -42,20 +49,37 @@ class ConvNet(nn.Module):
                  activation="Tanh", inner_activation="PReLu"):
         super(ConvNet, self).__init__()
 
-        self.network = nn.Sequential()
+        self.networks = []
 
-        self.network.add_module("input_Conv", Conv2dBlock(
+        self.networks.append(Conv2dBlock(
             in_channels, inner_channels, kernel_size, stride, padding, dropout, norm, inner_activation))
+        self.add_module("input_Conv", self.networks[-1])
 
         for i in range(num_inner_layers):
-            self.network.add_module("inner_Conv_%d" % (i), Conv2dBlock(
+            self.networks.append(Conv2dBlock(
                 inner_channels, int(inner_channels*factor),  kernel_size, stride, padding, dropout, norm, inner_activation))
+            self.add_module("inner_Conv_%d" % (i), self.networks[-1])
             inner_channels = int(inner_channels*factor)
-        self.network.add_module("output_Conv", Conv2dBlock(
+        self.networks.append(Conv2dBlock(
             inner_channels, out_channels, kernel_size, stride, padding, 0, None, activation))
+        self.add_module("output_COnv", self.networks[-1])
 
-    def forward(self, x):
-        return self.network(x)
+    def forward(self, x, layer=-1, every=False):
+        if layer < 0:
+            layer = len(self.networks)+layer+1
+        if every:
+            result = []
+        for i in range(max(1, min(layer, len(self.networks)))):
+            x = self.networks[i](x)
+            if every:
+                result.append(x)
+        if every:
+            return result
+        else:
+            return x
+
+    def __len__(self):
+        return len(self.networks)
 
 
 class ConvTransposeNet(nn.Module):
@@ -65,20 +89,37 @@ class ConvTransposeNet(nn.Module):
                  activation="Tanh", inner_activation="PReLu"):
         super(ConvTransposeNet, self).__init__()
 
-        self.network = nn.Sequential()
+        self.networks = []
 
-        self.network.add_module("input_ConvTranspose", ConvTranspose2dBlock(
+        self.networks.append(ConvTranspose2dBlock(
             in_channels, inner_channels, kernel_size, stride, padding, output_padding, 0, norm, inner_activation))
+        self.add_module("input_ConvTranspose", self.networks[-1])
 
         for i in range(num_inner_layers):
-            self.network.add_module("inner_ConvTranspose_%d" % (i), ConvTranspose2dBlock(
+            self.networks.append(ConvTranspose2dBlock(
                 inner_channels, int(inner_channels*factor),  kernel_size, stride, padding, output_padding, dropout, norm, inner_activation))
+            self.add_module("inner_ConvTranspose_%d" % (i), self.networks[-1])
             inner_channels = int(inner_channels*factor)
-        self.network.add_module("output_ConvTranspose", ConvTranspose2dBlock(
+        self.networks.append(ConvTranspose2dBlock(
             inner_channels, out_channels, kernel_size, stride, padding, output_padding, dropout, None, activation))
+        self.add_module("output_ConvTranspose", self.networks[-1])
 
-    def forward(self, x):
-        return self.network(x)
+    def forward(self, x, layer=-1, every=False):
+        if layer < 0:
+            layer = len(self.networks)+layer+1
+        if every:
+            result = []
+        for i in range(max(1, min(layer, len(self.networks)))):
+            x = self.networks[i](x)
+            if every:
+                result.append(x)
+        if every:
+            return result
+        else:
+            return x
+
+    def __len__(self):
+        return len(self.networks)
 
 
 class ResNet(nn.Module):
@@ -88,29 +129,47 @@ class ResNet(nn.Module):
                  activation="Tanh", inner_activation="PReLu", padtype="replicate", mode="BottleNeck"):
         super(ResNet, self).__init__()
 
-        self.network = nn.Sequential()
-        self.network.add_module("in_Conv2dBlock", Conv2dBlock(in_channels, inner_channels, kernel_size=kernel_size,
-                                                              stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
-
+        self.networks = []
+        self.networks.append(Conv2dBlock(in_channels, inner_channels, kernel_size=kernel_size,
+                                         stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
+        self.add_module("in_Conv2dBlock", self.networks[-1])
         ngf = inner_channels
         for i in range(num_layers-1):
-            self.network.add_module("Conv2dBlock_%d" % (i), Conv2dBlock(ngf, int(ngf*factor), kernel_size=kernel_size,
-                                                                        stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
+            self.networks.append(Conv2dBlock(ngf, int(ngf*factor), kernel_size=kernel_size,
+                                             stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
+            self.add_module("Conv2dBlock_%d" % (i), self.networks[-1])
             ngf = int(ngf*factor)
 
         for i in range(num_res_blocks):
-            self.network.add_module("ResBlock_%d" % (i), ResnetBlock(ngf, norm=norm, activation=inner_activation,
-                                                                     inner_activation=inner_activation, padtype=padtype, mode=mode))
+            self.networks.append(ResnetBlock(ngf, norm=norm, activation=inner_activation,
+                                             inner_activation=inner_activation, padtype=padtype, mode=mode))
+            self.add_module("ResBlock_%d" % (i), self.networks[-1])
 
         for i in range(num_layers-1):
-            self.network.add_module("ConvTranspose2dBlock_%d" % (i), ConvTranspose2dBlock(ngf, int(ngf/factor), kernel_size=kernel_size,
-                                                                                          stride=stride, padding=padding, output_padding=output_padding, dropout=dropout, norm=norm, activation=inner_activation))
+            self.networks.append(ConvTranspose2dBlock(ngf, int(ngf/factor), kernel_size=kernel_size,
+                                                      stride=stride, padding=padding, output_padding=output_padding, dropout=dropout, norm=norm, activation=inner_activation))
+            self.add_module("ConvTranspose2dBlock_%d" % (i), self.networks[-1])
             ngf = int(ngf/factor)
-        self.network.add_module("out_ConvTranspose2dBlock", ConvTranspose2dBlock(inner_channels, out_channels, kernel_size=kernel_size,
-                                                                                 stride=stride, padding=padding, output_padding=output_padding, dropout=0, norm=None, activation=activation))
+        self.networks.append(ConvTranspose2dBlock(inner_channels, out_channels, kernel_size=kernel_size,
+                                                  stride=stride, padding=padding, output_padding=output_padding, dropout=0, norm=None, activation=activation))
+        self.add_module("ConvTranspose2dBlock", self.networks[-1])
 
-    def forward(self, x):
-        return self.network(x)
+    def forward(self, x, layer=-1, every=False):
+        if layer < 0:
+            layer = len(self.networks)+layer+1
+        if every:
+            result = []
+        for i in range(max(1, min(layer, len(self.networks)))):
+            x = self.networks[i](x)
+            if every:
+                result.append(x)
+        if every:
+            return result
+        else:
+            return x
+
+    def __len__(self):
+        return len(self.networks)
 
 
 class ConvNetworkFactory(NetworkFactory):
@@ -178,6 +237,16 @@ class ConvArchitectFactory(BaseArchitectFactory):
     def __init__(self):
         super(ConvArchitectFactory, self).__init__()
         self.conv_network_factory = ConvNetworkFactory()
+
+    def define_single_network(self, param, in_channels=None, out_channels=None):
+        module_type = param["type"]
+        if module_type in self.network_factory.exists_model_name:
+            return self.network_factory.define(param)
+        elif module_type in self.conv_network_factory.exists_model_name:
+            return self.conv_network_factory.define(
+                param, in_channels, out_channels)
+        else:
+            raise RuntimeError("module not exists!")
 
     def define_network(self, param, in_channels=None, out_channels=None):
         result = []
