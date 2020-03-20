@@ -62,7 +62,7 @@ class ConvNet(nn.Module):
             inner_channels = int(inner_channels*factor)
         self.networks.append(Conv2dBlock(
             inner_channels, out_channels, kernel_size, stride, padding, 0, None, activation))
-        self.add_module("output_COnv", self.networks[-1])
+        self.add_module("output_Conv", self.networks[-1])
 
     def forward(self, x, layer=-1, every=False):
         if layer < 0:
