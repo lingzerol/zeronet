@@ -119,9 +119,9 @@ class ConvNetworkFactory(NetworkFactory):
         super(ConvNetworkFactory, self).__init__()
 
         self.exists_model_name = ["ConvNet", "ConvTransposeNet", "UNet", "ResNet",
-                                  "Conv2dBlock", "ConvTranspose2dBlock", "ResnetBlock"]
+                                  "Conv2dBlock", "ConvTranspose2dBlock", "ResnetBlock", "UNetBlock"]
 
-    def define(self, param, in_channels, out_channels):
+    def define(self, param, in_channels, out_channels, subblock=None):
         module_type = param["type"]
 
         if module_type not in self.exists_model_name:
@@ -143,6 +143,8 @@ class ConvNetworkFactory(NetworkFactory):
         activation = param["activation"] if "activation" in param else None
         dropout = param["dropout"] if "dropout" in param else 0
         padtype = param["padtype"] if "padtype" in param else "replicate"
+        outermost = param["outermost"] if "outermost" in param else False
+        innermost = param["innermost"] if "innermost" in param else False
         mode = param["mode"] if "mode" in param else "BottleNeck"
 
         if module_type == "ConvNet":
@@ -164,6 +166,11 @@ class ConvNetworkFactory(NetworkFactory):
         elif module_type == "ResNetBlock":
             return ResNetBlock(sub_in_channels, sub_out_channels, norm, activation,
                                inner_activation, padtype, mode=mode)
+        elif module_type == "UNetBlock":
+            return UNetBlock(inner_channels, out_channels, kernel_size, stride=stride,
+                             padding=padding, dropout=dropout, input_nc=in_channels, outermost=outermost,
+                             innermost=innermost, subblock=subblock, norm=norm, activation=activation,
+                             inner_activation=inner_activation, padtype=padtype)
 
 
 class ConvArchitectFactory(BaseArchitectFactory):

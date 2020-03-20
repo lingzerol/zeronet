@@ -35,5 +35,3 @@ class ArchitectFactory(ABC):
     @abstractmethod
     def define_loss(self, *args):
         pass
-
-
