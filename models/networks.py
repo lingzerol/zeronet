@@ -134,7 +134,7 @@ class ResNet(nn.Module):
                                          stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
         self.add_module("in_Conv2dBlock", self.networks[-1])
         ngf = inner_channels
-        for i in range(num_layers):
+        for i in range(num_layers-1):
             self.networks.append(Conv2dBlock(ngf, int(ngf*factor), kernel_size=kernel_size,
                                              stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
             self.add_module("Conv2dBlock_%d" % (i), self.networks[-1])
@@ -145,7 +145,7 @@ class ResNet(nn.Module):
                                              inner_activation=inner_activation, padtype=padtype, mode=mode))
             self.add_module("ResBlock_%d" % (i), self.networks[-1])
 
-        for i in range(num_layers):
+        for i in range(num_layers-1):
             self.networks.append(ConvTranspose2dBlock(ngf, int(ngf/factor), kernel_size=kernel_size,
                                                       stride=stride, padding=padding, output_padding=output_padding, dropout=dropout, norm=norm, activation=inner_activation))
             self.add_module("ConvTranspose2dBlock_%d" % (i), self.networks[-1])
