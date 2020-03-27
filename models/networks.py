@@ -152,7 +152,7 @@ class ResNet(nn.Module):
             ngf = int(ngf/factor)
         self.networks.append(ConvTranspose2dBlock(inner_channels, out_channels, kernel_size=kernel_size,
                                                   stride=stride, padding=padding, output_padding=output_padding, dropout=0, norm=None, activation=activation))
-        self.add_module("ConvTranspose2dBlock", self.networks[-1])
+        self.add_module("out_ConvTranspose2dBlock", self.networks[-1])
 
     def forward(self, x, layer=-1, every=False):
         if layer < 0:
