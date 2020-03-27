@@ -130,9 +130,10 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
 
         self.networks = []
-        self.networks.append(Conv2dBlock(in_channels, inner_channels, kernel_size=kernel_size,
-                                         stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
-        self.add_module("in_Conv2dBlock", self.networks[-1])
+        if num_layers > 0:
+            self.networks.append(Conv2dBlock(in_channels, inner_channels, kernel_size=kernel_size,
+                                            stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
+            self.add_module("in_Conv2dBlock", self.networks[-1])
         ngf = inner_channels
         for i in range(num_layers-1):
             self.networks.append(Conv2dBlock(ngf, int(ngf*factor), kernel_size=kernel_size,
@@ -150,9 +151,10 @@ class ResNet(nn.Module):
                                                       stride=stride, padding=padding, output_padding=output_padding, dropout=dropout, norm=norm, activation=inner_activation))
             self.add_module("ConvTranspose2dBlock_%d" % (i), self.networks[-1])
             ngf = int(ngf/factor)
-        self.networks.append(ConvTranspose2dBlock(inner_channels, out_channels, kernel_size=kernel_size,
-                                                  stride=stride, padding=padding, output_padding=output_padding, dropout=0, norm=None, activation=activation))
-        self.add_module("out_ConvTranspose2dBlock", self.networks[-1])
+        if num_layers > 0:
+            self.networks.append(ConvTranspose2dBlock(inner_channels, out_channels, kernel_size=kernel_size,
+                                                    stride=stride, padding=padding, output_padding=output_padding, dropout=0, norm=None, activation=activation))
+            self.add_module("out_ConvTranspose2dBlock", self.networks[-1])
 
     def forward(self, x, layer=-1, every=False):
         if layer < 0:
