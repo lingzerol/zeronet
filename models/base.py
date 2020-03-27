@@ -142,7 +142,7 @@ class ResnetBlock(nn.Module):
                 in_channels, out_channels, kernel_size=3, stride=1, padding=p, dropout=0, norm=norm, activation=inner_activation))
 
             self.network.add_module("out_Conv2dBlock", Conv2dBlock(
-                in_channels, in_channels, kernel_size=1, stride=1, padding=0, dropout=0, norm=norm, activation=activation))
+                out_channels, out_channels, kernel_size=1, stride=1, padding=0, dropout=0, norm=norm, activation=activation))
         else:
             p = 0
             if padtype == "replicate":
@@ -153,7 +153,7 @@ class ResnetBlock(nn.Module):
                 p = 1
 
             self.network.add_module("in_Conv2dBlock", Conv2dBlock(
-                in_channels, out_channels, kernel_size=3, stride=1, padding=p, dropout=0, norm=norm, activation=inner_activation))
+                in_channels, in_channels, kernel_size=3, stride=1, padding=p, dropout=0, norm=norm, activation=inner_activation))
 
             p = 0
             if padtype == "replicate":
@@ -165,7 +165,7 @@ class ResnetBlock(nn.Module):
                 p = 1
 
             self.network.add_module("out_Conv2dBlock", Conv2dBlock(
-                in_channels, in_channels, kernel_size=3, stride=1, padding=p, dropout=0, norm=norm, activation=activation))
+                in_channels, out_channels, kernel_size=3, stride=1, padding=p, dropout=0, norm=norm, activation=activation))
 
     def forward(self, x):
         out = self.network(x)
