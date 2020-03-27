@@ -132,7 +132,7 @@ class ResNet(nn.Module):
         self.networks = []
         if num_layers > 0:
             self.networks.append(Conv2dBlock(in_channels, inner_channels, kernel_size=kernel_size,
-                                            stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
+                                             stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
             self.add_module("in_Conv2dBlock", self.networks[-1])
         ngf = inner_channels
         for i in range(num_layers-1):
@@ -142,7 +142,19 @@ class ResNet(nn.Module):
             ngf = int(ngf*factor)
 
         for i in range(num_res_blocks):
-            self.networks.append(ResnetBlock(ngf, norm=norm, activation=inner_activation,
+            if i == 0 and i != num_res_blocks - 1 and num_layers <= 0:
+                in_ngf = in_channels
+                out_ngf = ngf
+            elif i == num_res_blocks - 1 and i != 0 and num_layers <= 0:
+                in_ngf = ngf
+                out_ngf = out_channels
+            elif i == num_res_blocks - 1 and i == 0 and num_layers <= 0:
+                in_ngf = in_channels
+                out_ngf = out_channels
+            else:
+                in_ngf = ngf
+                out_ngf = ngf
+            self.networks.append(ResnetBlock(in_ngf, out_ngf, norm=norm, activation=inner_activation,
                                              inner_activation=inner_activation, padtype=padtype, mode=mode))
             self.add_module("ResBlock_%d" % (i), self.networks[-1])
 
@@ -153,7 +165,7 @@ class ResNet(nn.Module):
             ngf = int(ngf/factor)
         if num_layers > 0:
             self.networks.append(ConvTranspose2dBlock(inner_channels, out_channels, kernel_size=kernel_size,
-                                                    stride=stride, padding=padding, output_padding=output_padding, dropout=0, norm=None, activation=activation))
+                                                      stride=stride, padding=padding, output_padding=output_padding, dropout=0, norm=None, activation=activation))
             self.add_module("out_ConvTranspose2dBlock", self.networks[-1])
 
     def forward(self, x, layer=-1, every=False):
