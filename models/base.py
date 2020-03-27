@@ -122,7 +122,7 @@ class ResnetBlock(nn.Module):
                  inner_activation="PReLu", padtype="replicate", mode="BottleNeck"):
         super(ResnetBlock, self).__init__()
 
-        if out_channels is None:
+        if inner_channels is None:
             inner_channels = in_channels
 
         self.network = nn.Sequential()
