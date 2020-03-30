@@ -162,7 +162,7 @@ class ResNet(nn.Module):
             self.add_module("out_ConvTranspose2dBlock", self.networks[-1])
         elif inner_channels != out_channels:
             self.networks.append(ConvTranspose2dBlock(inner_channels, out_channels, kernel_size=1,
-                                                      stride=1, padding=1, output_padding=0, dropout=0, norm=None, activation=activation))
+                                                      stride=1, padding=0, output_padding=0, dropout=0, norm=None, activation=activation))
             self.add_module("out_ConvTranspose2dBlock", self.networks[-1])
 
 
