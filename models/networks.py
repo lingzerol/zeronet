@@ -192,7 +192,7 @@ class ConvNetworkFactory(NetworkFactory):
         self.exists_model_name = ["ConvNet", "ConvTransposeNet", "UNet", "ResNet",
                                   "Conv2dBlock", "ConvTranspose2dBlock", "ResnetBlock", "UNetBlock"]
 
-    def define(self, param, in_channels, out_channels, subblock=None):
+    def define(self, param, in_channels=None, out_channels=None, subblock=None):
         module_type = param["type"]
 
         if module_type not in self.exists_model_name:
