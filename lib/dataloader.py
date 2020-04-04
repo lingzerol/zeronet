@@ -36,6 +36,7 @@ class MultiDomainDataset(dset.VisionDataset):
                                                  target_transform=target_transform)
 
         samples = []
+        label_to_name = {}
         dirnum = 0
         for i, dirname in enumerate(os.listdir(root)):
             dirpath = os.path.join(root, dirname)
@@ -43,6 +44,7 @@ class MultiDomainDataset(dset.VisionDataset):
                 continue
             if os.path.islink(dirpath):
                 dirpath = os.readlink(dirpath)
+            label_to_name[dirname] = dirnum
             for filename in os.listdir(dirpath):
                 filepath = os.path.join(dirpath, filename)
                 if filename.lower().endswith(extensions):
@@ -51,6 +53,7 @@ class MultiDomainDataset(dset.VisionDataset):
 
         self.loader = loader
         self.samples = samples
+        self.label_to_name = label_to_name
 
     def __getitem__(self, index):
         path, target = self.samples[index]
@@ -63,3 +66,8 @@ class MultiDomainDataset(dset.VisionDataset):
 
     def __len__(self):
         return len(self.samples)
+
+    def target_to_name(self, target=-1):
+        if target == -1:
+            return self.label_to_name
+        return self.label_to_name[target]
