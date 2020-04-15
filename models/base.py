@@ -118,7 +118,7 @@ class UNetBlock(nn.Module):
 
 class ResnetBlock(nn.Module):
 
-    def __init__(self, in_channels, inner_channels=None, norm="BatchNorm2d", activation="PReLu",
+    def __init__(self, in_channels, inner_channels=None, dropout=0.5, norm="BatchNorm2d", activation="PReLu",
                  inner_activation="PReLu", padtype="replicate", mode="BottleNeck"):
         super(ResnetBlock, self).__init__()
 
@@ -128,7 +128,7 @@ class ResnetBlock(nn.Module):
         self.network = nn.Sequential()
         if mode == "BottleNeck":
             self.network.add_module("in_Conv2dBlock", Conv2dBlock(
-                in_channels, inner_channels, kernel_size=1, stride=1, padding=0, dropout=0, norm=norm, activation=inner_activation))
+                in_channels, inner_channels, kernel_size=1, stride=1, padding=0, dropout=dropout, norm=norm, activation=inner_activation))
 
             p = 0
             if padtype == "replicate":
@@ -139,7 +139,7 @@ class ResnetBlock(nn.Module):
                 p = 1
 
             self.network.add_module("middle_Conv2dBlock", Conv2dBlock(
-                inner_channels, inner_channels, kernel_size=3, stride=1, padding=p, dropout=0, norm=norm, activation=inner_activation))
+                inner_channels, inner_channels, kernel_size=3, stride=1, padding=p, dropout=dropout, norm=norm, activation=inner_activation))
 
             self.network.add_module("out_Conv2dBlock", Conv2dBlock(
                 inner_channels, in_channels, kernel_size=1, stride=1, padding=0, dropout=0, norm=norm, activation=activation))
@@ -153,7 +153,7 @@ class ResnetBlock(nn.Module):
                 p = 1
 
             self.network.add_module("in_Conv2dBlock", Conv2dBlock(
-                in_channels, inner_channels, kernel_size=3, stride=1, padding=p, dropout=0, norm=norm, activation=inner_activation))
+                in_channels, inner_channels, kernel_size=3, stride=1, padding=p, dropout=dropout, norm=norm, activation=inner_activation))
 
             p = 0
             if padtype == "replicate":

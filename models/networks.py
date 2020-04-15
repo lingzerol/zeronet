@@ -147,7 +147,7 @@ class ResNet(nn.Module):
             ngf = int(ngf*factor)
 
         for i in range(num_res_blocks):
-            self.networks.append(ResnetBlock(ngf, norm=norm, activation=inner_activation,
+            self.networks.append(ResnetBlock(ngf, dropout=dropout, norm=norm, activation=inner_activation,
                                              inner_activation=inner_activation, padtype=padtype, mode=mode))
             self.add_module("ResBlock_%d" % (i), self.networks[-1])
 
@@ -164,7 +164,6 @@ class ResNet(nn.Module):
             self.networks.append(ConvTranspose2dBlock(inner_channels, out_channels, kernel_size=1,
                                                       stride=1, padding=0, output_padding=0, dropout=0, norm=None, activation=activation))
             self.add_module("out_ConvTranspose2dBlock", self.networks[-1])
-
 
     def forward(self, x, layer=-1, every=False):
         if layer < 0:
