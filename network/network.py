@@ -100,7 +100,7 @@ class ResNet(nn.Module):
                  activation="Tanh", inner_activation="PReLu", padtype="replicate", mode="BottleNeck"):
         super(ResNet, self).__init__()
 
-        self.networks = []
+        self.networks = Interative_Sequential()
         if num_layers > 0:
             self.networks.add_module("in_Conv2dBlock", Conv2dBlock(in_channels, inner_channels, kernel_size=kernel_size,
                                                                    stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation))
