@@ -150,7 +150,7 @@ class BaseSchedularFactory(SchedularFactory):
         self.exists_schedular_name = ["Linear", "Step", "Plateau", "Cosine"]
 
     def define(self, param, parameters):
-        if param["type"] not in self.exists_optimizer_name:
+        if param["type"] not in self.exists_schedular_name:
             raise RuntimeError("Schedular not exists!")
 
         if param["type"] == "Linear":
