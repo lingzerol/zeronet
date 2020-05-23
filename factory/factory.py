@@ -2,8 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .factory import *
-from .base import *
+from ..base.factory import *
+from ..base.block import *
+from ..base.container import *
+from ..base.function import *
 
 
 class BaseNetworkFactory(NetworkFactory):
@@ -51,13 +53,17 @@ class BaseNetworkFactory(NetworkFactory):
             dropout = param["dropout"]
             return nn.Dropout2d(dropout)
         elif module_type == "BatchNorm1d":
-            return nn.BatchNorm1d()
+            num_features = param["num_features"]
+            return nn.BatchNorm1d(num_features)
         elif module_type == "BatchNorm2d":
-            return nn.BatchNorm2d()
+            num_features = param["num_features"]
+            return nn.BatchNorm2d(num_features)
         elif module_type == "InstanceNorm1d":
-            return nn.InstanceNorm1d()
+            num_features = param["num_features"]
+            return nn.InstanceNorm1d(num_features)
         elif module_type == "InstanceNorm2d":
-            return nn.InstanceNorm2d()
+            num_features = param["num_features"]
+            return nn.InstanceNorm2d(num_features)
         elif module_type == "ReflectionPad2d":
             padding = param["padding"]
             return nn.ReflectionPad2d(padding)
@@ -120,16 +126,16 @@ class BaseOptimizerFactory(OptimizerFactory):
         self.exists_optimizer_name = ["Adam", "SGD"]
 
     def define(self, param, parameters):
-        if param["training_type"] not in self.exists_optimizer_name:
+        if param["type"] not in self.exists_optimizer_name:
             raise RuntimeError("Optimizer not exists!")
 
-        if param["training_type"] == "Adam":
+        if param["type"] == "Adam":
             lr = param["lr"] if "lr" in param else 0.001
             beta1 = param["beta1"] if "beta1" in param else 0.5
             beta2 = param["beta2"] if "beta2" in param else 0.999
             optimizer = torch.optim.Adam(parameters,
                                          lr=param["lr"], betas=(beta1, beta2))
-        elif param["training_type"] == "SGD":
+        elif param["type"] == "SGD":
             lr = param["lr"] if "lr" in param else 0.001
             momentum = param["momentum"] if "momentum" in param else 0.5
             optimizer = torch.optim.SGD(
@@ -137,16 +143,45 @@ class BaseOptimizerFactory(OptimizerFactory):
         return optimizer
 
 
+class BaseSchedularFactory(SchedularFactory):
+
+    def __init__(self):
+        super(BaseSchedularFactory, self).__init__()
+        self.exists_schedular_name = ["Linear", "Step", "Plateau", "Cosine"]
+
+    def define(self, param, parameters):
+        if param["type"] not in self.exists_optimizer_name:
+            raise RuntimeError("Schedular not exists!")
+
+        if param["type"] == "Linear":
+            def lambda_rule(epoch):
+                lr_l = 1.0 - \
+                    min(1.0, max(0, epoch -
+                                 param["start"]) / float(param["num_epoch_decay"] + 1))
+                return lr_l
+            scheduler = torch.optim.lr_scheduler.LambdaLR(
+                parameters, lr_lambda=lambda_rule)
+        elif param["type"] == "Step":
+            scheduler = torch.optim.lr_scheduler.StepLR(
+                parameters, step_size=self.param["step_size"],
+                gamma=self.param["decay_gamma"])
+        elif param["type"] == "Plateau":
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                parameters, mode=param["mode"], factor=param["factor"], threshold=param["threshold"], patience=param["patience"])
+        elif param["type"] == "Cosine":
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                parameters, T_max=param["T_max"], eta_min=param["eta_min"])
+        return scheduler
+
+
 class BaseArchitectFactory(ArchitectFactory):
 
-    def __init__(self, network_factory=BaseNetworkFactory(), optmizer_factory=BaseOptimizerFactory(), loss_factory=BaseLossFactory()):
+    def __init__(self, network_factory=BaseNetworkFactory(), optmizer_factory=BaseOptimizerFactory(), loss_factory=BaseLossFactory(), scheduler_factory=BaseSchedularFactory()):
         super(BaseArchitectFactory, self).__init__()
         self.network_factory = network_factory
         self.optimizer_factor = optmizer_factory
         self.loss_factory = loss_factory
-
-    def define_single_network(self, param):
-        return self.network_factory.define(param)
+        self.scheduler_factory = scheduler_factory
 
     def define_network(self, param):
         result = []
@@ -155,10 +190,13 @@ class BaseArchitectFactory(ArchitectFactory):
             result.append([id, self.network_factory.define(param)])
         result.sort(key=lambda x: x[0])
         result = [r[1] for r in result]
-        return nn.Sequential(*result)
+        return Interative_Sequential(*result)
 
     def define_optimizer(self, param, parameters):
         return self.optimizer_factor.define(param, parameters)
 
     def define_loss(self, loss_type):
         return self.loss_factory.define(loss_type)
+
+    def define_schedular(self, param, parameters):
+        return self.scheduler_factory.define(param, parameters)

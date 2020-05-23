@@ -22,10 +22,14 @@ class LossFactory(ABC):
         pass
 
 
-class ArchitectFactory(ABC):
+class SchedularFactory(ABC):
+
     @abstractmethod
-    def define_single_network(self, param):
+    def define(self, *args):
         pass
+
+
+class ArchitectFactory(ABC):
 
     @abstractmethod
     def define_network(self, *args):
@@ -37,4 +41,8 @@ class ArchitectFactory(ABC):
 
     @abstractmethod
     def define_loss(self, *args):
+        pass
+
+    @abstractmethod
+    def define_schedular(self, *args):
         pass
