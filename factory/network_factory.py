@@ -42,31 +42,32 @@ class ConvNetworkFactory(NetworkFactory):
         negative_slope = param["negative_slope"] if "negative_slope" in param else 0.0
         inner_negative_slope = param["inner_negative_slope"] if "inner_negative_slope" in param else 0.0
         inplace = param["inplace"] if "inplace" in param else True
+        bias = param["bias"] if "bias" in param else True
 
         if module_type == "ConvNet":
-            return ConvNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                           padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, negative_slope, inner_negative_slope, inplace)
+            return ConvNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride=stride,
+                           padding=padding, factor=factor, num_inner_layers=num_inner_layers, dropout=dropout, norm=norm, activation=activation, inner_activation=inner_activation, negative_slope=negative_slope, inner_negative_slope=inner_negative_slope, inplace=inplace, bias=bias)
         elif module_type == "ConvTransposeNet":
-            return ConvTransposeNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                                    padding, output_padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, negative_slope, inner_negative_slope, inplace)
+            return ConvTransposeNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride=stride,
+                                    padding=padding, output_padding=output_padding, factor=factor, num_inner_layers=num_inner_layers, dropout=dropout, norm=norm, activation=activation, inner_activation=inner_activation, negative_slope=negative_slope, inner_negative_slope=inner_negative_slope, inplace=inplace, bias=bias)
         elif module_type == "UNet":
-            return UNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                        padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, padtype)
+            return UNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride=stride,
+                        padding=padding, factor=factor, num_inner_layers=num_inner_layers, dropout=dropout, norm=norm, activation=activation, inner_activation=inner_activation, padtype=padtype, negative_slope=negative_slope, inner_negative_slope=inner_negative_slope, inplace=inplace, bias=bias)
         elif module_type == "ResNet":
-            return ResNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                          padding, output_padding, factor, num_layers, num_res_blocks, dropout, norm, activation, inner_activation, padtype, mode=mode)
+            return ResNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride=stride,
+                          padding=padding, output_padding=output_padding, factor=factor, num_layers=num_layers, num_res_blocks=num_res_blocks, dropout=dropout, norm=norm, activation=activation, inner_activation=inner_activation, padtype=padtype, mode=mode, negative_slope=negative_slope, inner_negative_slope=inner_negative_slope, inplace=inplace, bias=bias)
         elif module_type == "Conv2dBlock":
-            return Conv2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, dropout,  norm, activation, negative_slope, inplace)
+            return Conv2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride=stride, padding=padding, dropout=dropout, norm=norm, activation=activation, negative_slope=negative_slope, inplace=inplace, bias=bias)
         elif module_type == "ConvTranspose2dBlock":
-            return ConvTranspose2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, output_padding, dropout, norm, activation, negative_slope, inplace)
+            return ConvTranspose2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride=stride, padding=padding, output_padding=output_padding, dropout=dropout, norm=norm, activation=activation, negative_slope=negative_slope, inplace=inplace, bias=bias)
         elif module_type == "ResNetBlock":
-            return ResNetBlock(sub_in_channels, sub_out_channels, norm, activation,
-                               inner_activation, padtype, mode=mode)
+            return ResNetBlock(sub_in_channels, sub_out_channels, norm=norm, activation=activation,
+                               inner_activation=inner_activation, padtype=padtype, mode=mode, negative_slope=negative_slope, inner_negative_slope=inner_negative_slope, inplace=inplace, bias=bias)
         elif module_type == "UNetBlock":
             return UNetBlock(inner_channels, out_channels, kernel_size, stride=stride,
                              padding=padding, dropout=dropout, input_nc=in_channels, outermost=outermost,
                              innermost=innermost, subblock=subblock, norm=norm, activation=activation,
-                             inner_activation=inner_activation, padtype=padtype)
+                             inner_activation=inner_activation, padtype=padtype, negative_slope=negative_slope, inner_negative_slope=inner_negative_slope, inplace=inplace, bias=bias)
 
 
 class ConvArchitectFactory(BaseArchitectFactory):
