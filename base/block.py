@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class ConvTranspose2dBlock(nn.Module):
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, dropout=0, norm="BatchNorm2d", activation="PReLu"):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, dropout=0, norm="BatchNorm2d", activation="PReLu", negative_slope=0.0, inplace=True):
         super(ConvTranspose2dBlock, self).__init__()
         self.network = nn.Sequential()
         if dropout:
@@ -25,7 +25,10 @@ class ConvTranspose2dBlock(nn.Module):
                 "Activation_layer", nn.PReLU(num_parameters=out_channels))
         elif activation == "ReLu":
             self.network.add_module(
-                "Activation_layer", nn.ReLU(inplace=True))
+                "Activation_layer", nn.ReLU(inplace=inplace))
+        elif activation == "LeakyReLu":
+            self.network.add_module(
+                "Activation_layer", nn.LeakyReLU(negative_slope, inplace=inplace))
         elif activation == "Sigmoid":
             self.network.add_module(
                 "Activation_layer", nn.Sigmoid())
@@ -39,7 +42,7 @@ class ConvTranspose2dBlock(nn.Module):
 
 class Conv2dBlock(nn.Module):
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dropout=0, norm="BatchNorm2d", activation="PReLu"):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dropout=0, norm="BatchNorm2d", activation="PReLu", negative_slope=0.0, inplace=True):
         super(Conv2dBlock, self).__init__()
         self.network = nn.Sequential()
 
@@ -57,7 +60,10 @@ class Conv2dBlock(nn.Module):
                 "Activation_layer", nn.PReLU(num_parameters=out_channels))
         elif activation == "ReLu":
             self.network.add_module(
-                "Activation_layer", nn.ReLU(inplace=True))
+                "Activation_layer", nn.ReLU(inplace=inplace))
+        elif activation == "LeakyReLu":
+            self.network.add_module(
+                "Activation_layer", nn.LeakyReLU(negative_slope, inplace=inplace))
         elif activation == "Sigmoid":
             self.network.add_module(
                 "Activation_layer", nn.Sigmoid())

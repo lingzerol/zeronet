@@ -39,6 +39,8 @@ class ConvNetworkFactory(NetworkFactory):
         outermost = param["outermost"] if "outermost" in param else False
         innermost = param["innermost"] if "innermost" in param else False
         mode = param["mode"] if "mode" in param else "BottleNeck"
+        negative_slope = param["negative_slope"] if "negative_slope" in param else 0.0
+        inplace = param["inplace"] if "inplace" in param else True
 
         if module_type == "ConvNet":
             return ConvNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
@@ -53,9 +55,9 @@ class ConvNetworkFactory(NetworkFactory):
             return ResNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
                           padding, output_padding, factor, num_layers, num_res_blocks, dropout, norm, activation, inner_activation, padtype, mode=mode)
         elif module_type == "Conv2dBlock":
-            return Conv2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, dropout,  norm, activation)
+            return Conv2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, dropout,  norm, activation, negative_slope, inplace)
         elif module_type == "ConvTranspose2dBlock":
-            return ConvTranspose2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, output_padding, dropout, norm, activation)
+            return ConvTranspose2dBlock(sub_in_channels, sub_out_channels, kernel_size, stride, padding, output_padding, dropout, norm, activation, negative_slope, inplace)
         elif module_type == "ResNetBlock":
             return ResNetBlock(sub_in_channels, sub_out_channels, norm, activation,
                                inner_activation, padtype, mode=mode)
