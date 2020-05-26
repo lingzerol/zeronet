@@ -6,6 +6,7 @@ from ..base.block import *
 from ..base.container import *
 from ..base.function import *
 
+
 class UNet(nn.Module):
 
     def __init__(self, in_channels, out_channels, inner_channels, kernel_size, stride=1,
@@ -117,6 +118,9 @@ class ResNet(nn.Module):
         for i in range(num_res_blocks):
             self.networks.add_module("ResBlock_%d" % (i), ResnetBlock(ngf, dropout=dropout, norm=norm, activation=inner_activation,
                                                                       inner_activation=inner_activation, padtype=padtype, mode=mode))
+            if dropout > 0:
+                self.networks.add_module("Dropout_%d" %
+                                         (i), nn.Dropout(dropout))
 
         for i in range(num_layers-1):
             self.networks.add_module("ConvTranspose2dBlock_%d" % (i), ConvTranspose2dBlock(ngf, int(ngf/factor), kernel_size=kernel_size,
@@ -134,4 +138,3 @@ class ResNet(nn.Module):
 
     def __len__(self):
         return len(self.networks)
-
