@@ -40,14 +40,15 @@ class ConvNetworkFactory(NetworkFactory):
         innermost = param["innermost"] if "innermost" in param else False
         mode = param["mode"] if "mode" in param else "BottleNeck"
         negative_slope = param["negative_slope"] if "negative_slope" in param else 0.0
+        inner_negative_slope = param["inner_negative_slope"] if "inner_negative_slope" in param else 0.0
         inplace = param["inplace"] if "inplace" in param else True
 
         if module_type == "ConvNet":
             return ConvNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                           padding, factor, num_inner_layers, dropout, norm, activation, inner_activation)
+                           padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, negative_slope, inner_negative_slope, inplace)
         elif module_type == "ConvTransposeNet":
             return ConvTransposeNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
-                                    padding, output_padding, factor, num_inner_layers, dropout, norm, activation, inner_activation)
+                                    padding, output_padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, negative_slope, inner_negative_slope, inplace)
         elif module_type == "UNet":
             return UNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride,
                         padding, factor, num_inner_layers, dropout, norm, activation, inner_activation, padtype)

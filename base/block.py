@@ -83,24 +83,24 @@ class UNetBlock(nn.Module):
     def __init__(self, inner_nc, outer_nc, kernel_size, stride=1,
                  padding=0, dropout=0.5, input_nc=None, outermost=False,
                  innermost=False, subblock=None, norm="BatchNorm2d", activation="PReLu",
-                 inner_activation="PReLu", padtype="replicate"):
+                 inner_activation="PReLu", padtype="replicate", negative_slope=0.0, inner_negative_slope=0.0, inplace=True):
         super(UNetBlock, self).__init__()
         self.network = nn.Sequential()
 
         if input_nc is None:
             input_nc = outer_nc
         self.network.add_module("Input_conv2dblock", Conv2dBlock(
-            input_nc, inner_nc, kernel_size, stride, padding, dropout, norm, inner_activation))
+            input_nc, inner_nc, kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout, norm=norm, activation=inner_activation, negative_slope=inner_negative_slope, inplace=inplace))
 
         if not innermost:
             self.network.add_module("subblock", subblock)
 
         if innermost:
             self.network.add_module("Output_convTranspose2dblock", ConvTranspose2dBlock(
-                inner_nc, outer_nc, kernel_size, stride, padding, 0, 0, norm, activation))
+                inner_nc, outer_nc, kernel_size=kernel_size, stride=stride, padding=padding, output_padding=0, dropout=0, norm=norm, activation=activation, negative_slope=negative_slope, inplace=inplace))
         else:
             self.network.add_module("Output_convTranspose2dblock", ConvTranspose2dBlock(
-                inner_nc*2, outer_nc, kernel_size, stride, padding, 0, dropout, norm, activation))
+                inner_nc*2, outer_nc, kernel_size=kernel_size, stride=stride, padding=padding, output_padding=0, dropout=dropout, norm=norm, activation=activation, negative_slope=negative_slope, inplace=inplace))
 
         self.outermost = outermost
         self.padtype = padtype
@@ -125,7 +125,7 @@ class UNetBlock(nn.Module):
 class ResnetBlock(nn.Module):
 
     def __init__(self, in_channels, inner_channels=None, dropout=0.5, norm="BatchNorm2d", activation="PReLu",
-                 inner_activation="PReLu", padtype="replicate", mode="BottleNeck"):
+                 inner_activation="PReLu", padtype="replicate", mode="BottleNeck", negative_slope=0.0, inner_negative_slope=0.0, inplace=True):
         super(ResnetBlock, self).__init__()
 
         if inner_channels is None:
@@ -134,7 +134,7 @@ class ResnetBlock(nn.Module):
         self.network = nn.Sequential()
         if mode == "BottleNeck":
             self.network.add_module("in_Conv2dBlock", Conv2dBlock(
-                in_channels, inner_channels, kernel_size=1, stride=1, padding=0, dropout=dropout, norm=norm, activation=inner_activation))
+                in_channels, inner_channels, kernel_size=1, stride=1, padding=0, dropout=dropout, norm=norm, activation=inner_activation, negative_slope=inner_negative_slope, inplace=inplace))
 
             p = 0
             if padtype == "replicate":
@@ -145,10 +145,10 @@ class ResnetBlock(nn.Module):
                 p = 1
 
             self.network.add_module("middle_Conv2dBlock", Conv2dBlock(
-                inner_channels, inner_channels, kernel_size=3, stride=1, padding=p, dropout=dropout, norm=norm, activation=inner_activation))
+                inner_channels, inner_channels, kernel_size=3, stride=1, padding=p, dropout=dropout, norm=norm, activation=inner_activation, negative_slope=inner_negative_slope, inplace=inplace))
 
             self.network.add_module("out_Conv2dBlock", Conv2dBlock(
-                inner_channels, in_channels, kernel_size=1, stride=1, padding=0, dropout=0, norm=norm, activation=activation))
+                inner_channels, in_channels, kernel_size=1, stride=1, padding=0, dropout=0, norm=norm, activation=activation, negative_slope=negative_slope, inplace=inplace))
         else:
             p = 0
             if padtype == "replicate":
@@ -159,7 +159,7 @@ class ResnetBlock(nn.Module):
                 p = 1
 
             self.network.add_module("in_Conv2dBlock", Conv2dBlock(
-                in_channels, inner_channels, kernel_size=3, stride=1, padding=p, dropout=dropout, norm=norm, activation=inner_activation))
+                in_channels, inner_channels, kernel_size=3, stride=1, padding=p, dropout=dropout, norm=norm, activation=inner_activation, negative_slope=inner_negative_slope, inplace=inplace))
 
             p = 0
             if padtype == "replicate":
@@ -171,8 +171,8 @@ class ResnetBlock(nn.Module):
                 p = 1
 
             self.network.add_module("out_Conv2dBlock", Conv2dBlock(
-                inner_channels, in_channels, kernel_size=3, stride=1, padding=p, dropout=0, norm=norm, activation=activation))
+                inner_channels, in_channels, kernel_size=3, stride=1, padding=p, dropout=0, norm=norm, activation=activation, negative_slope=negative_slope, inplace=inplace))
 
     def forward(self, x):
-        out = self.network(x)
+        out=self.network(x)
         return out+x
