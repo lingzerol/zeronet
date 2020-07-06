@@ -23,7 +23,7 @@ class ConvNetworkFactory(NetworkFactory):
         factor = param["factor"] if "factor" in param else 2
         sub_in_channels = param["in_channels"] if "in_channels" in param else in_channels
         sub_out_channels = param["out_channels"] if "out_channels" in param else out_channels
-        inner_channels = param["inner_channels"] if "inner_channels" in param else 128
+        inner_channels = param["inner_channels"] if "inner_channels" in param else in_channels*factor
         num_inner_layers = param["num_inner_layers"] if "num_inner_layers" in param else 3
         num_layers = param["num_layers"] if "num_layers" in param else 2
         num_res_blocks = param["num_res_blocks"] if "num_res_blocks" in param else 3
