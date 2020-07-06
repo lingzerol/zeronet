@@ -1,9 +1,29 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from . import function
 
 
-class ConvTranspose2dBlock(nn.Module):
+class Block(nn.Module):
+
+    def create_avtivation(self, activation="PReLu", out_channels=0, negative_slope=0.0, inplace=True, bias=True):
+        if activation == "PReLu":
+            return nn.PReLU(num_parameters=out_channels)
+        elif activation == "ReLu":
+            return nn.ReLU(inplace=inplace)
+        elif activation == "LeakyReLu":
+            return nn.LeakyReLU(negative_slope, inplace=inplace)
+        elif activation == "Sigmoid":
+            return nn.Sigmoid()
+        elif activation == "Tanh":
+            return nn.Tanh()
+        elif activation == "Sine":
+            return function.Sine()
+        else:
+            raise ValueError("Activation %s is not exists."%(activation))
+
+
+class ConvTranspose2dBlock(Block):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, dropout=0, norm="BatchNorm2d", activation="PReLu", negative_slope=0.0, inplace=True, bias=True):
         super(ConvTranspose2dBlock, self).__init__()
@@ -19,28 +39,16 @@ class ConvTranspose2dBlock(nn.Module):
         elif norm == "InstanceNorm2d":
             self.network.add_module(
                 "Norm_layer", nn.InstanceNorm2d(out_channels))
-
-        if activation == "PReLu":
+                
+        if activation is not None:
             self.network.add_module(
-                "Activation_layer", nn.PReLU(num_parameters=out_channels))
-        elif activation == "ReLu":
-            self.network.add_module(
-                "Activation_layer", nn.ReLU(inplace=inplace))
-        elif activation == "LeakyReLu":
-            self.network.add_module(
-                "Activation_layer", nn.LeakyReLU(negative_slope, inplace=inplace))
-        elif activation == "Sigmoid":
-            self.network.add_module(
-                "Activation_layer", nn.Sigmoid())
-        elif activation == "Tanh":
-            self.network.add_module(
-                "Activation_layer", nn.Tanh())
+                "Activation_Layer", self.create_avtivation(activation=activation, out_channels=out_channels, negative_slope=negative_slope, inplace=inplace, bias=bias))
 
     def forward(self, x):
         return self.network(x)
 
 
-class Conv2dBlock(nn.Module):
+class Conv2dBlock(Block):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dropout=0, norm="BatchNorm2d", activation="PReLu", negative_slope=0.0, inplace=True, bias=True):
         super(Conv2dBlock, self).__init__()
@@ -55,21 +63,9 @@ class Conv2dBlock(nn.Module):
             self.network.add_module(
                 "Norm_layer", nn.InstanceNorm2d(out_channels))
 
-        if activation == "PReLu":
+        if activation is not None:
             self.network.add_module(
-                "Activation_layer", nn.PReLU(num_parameters=out_channels))
-        elif activation == "ReLu":
-            self.network.add_module(
-                "Activation_layer", nn.ReLU(inplace=inplace))
-        elif activation == "LeakyReLu":
-            self.network.add_module(
-                "Activation_layer", nn.LeakyReLU(negative_slope, inplace=inplace))
-        elif activation == "Sigmoid":
-            self.network.add_module(
-                "Activation_layer", nn.Sigmoid())
-        elif activation == "Tanh":
-            self.network.add_module(
-                "Activation_layer", nn.Tanh())
+                "Activation_Layer", self.create_avtivation(activation=activation, out_channels=out_channels, negative_slope=negative_slope, inplace=inplace, bias=bias))
 
         if dropout:
             self.network.add_module("Dropout", nn.Dropout(dropout))

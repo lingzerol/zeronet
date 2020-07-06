@@ -23,3 +23,12 @@ class Reshape(nn.Module):
 
     def forward(self, x):
         return torch.reshape(x, self.reshape_size)
+
+
+class Sine(nn.Module):
+
+    def __init__(self):
+        super(Sine, self).__init__()
+        
+    def forward(self, x):
+        return torch.sin(x)

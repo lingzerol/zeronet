@@ -13,7 +13,7 @@ class BaseNetworkFactory(NetworkFactory):
         super(BaseNetworkFactory, self).__init__()
         self.exists_model_name = ["Linear", "Flatten", "Conv2d", "ConvTranspose2d", "Dropout", "Dropout2d", "BatchNorm1d",
                                   "BatchNorm2d", "InstanceNorm1d", "InstanceNorm2d", "ReflectionPad2d", "ReplicationPad2d",
-                                  "ZeroPad2d", "Interpolate", "Reshape", "Sigmoid", "PReLu", "LeakyReLu", "ReLu", "Tanh", "Softmax"]
+                                  "ZeroPad2d", "Interpolate", "Reshape", "Sigmoid", "PReLu", "LeakyReLu", "ReLu", "Tanh", "Softmax", "Sine"]
 
     def define(self, param):
         module_type = param["type"]
@@ -99,6 +99,8 @@ class BaseNetworkFactory(NetworkFactory):
         elif module_type == "Softmax":
             dim = param["dim"] if "dim" in param else None
             return nn.Softmax(dim=dim)
+        elif module_type == "Sine":
+            return Sine()
 
 
 class BaseLossFactory(LossFactory):
