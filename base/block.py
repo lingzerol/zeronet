@@ -20,7 +20,7 @@ class Block(nn.Module):
         elif activation == "Sine":
             return function.Sine()
         else:
-            raise ValueError("Activation %s is not exists."%(activation))
+            raise ValueError("Activation %s is not exists." % (activation))
 
 
 class ConvTranspose2dBlock(Block):
@@ -39,7 +39,7 @@ class ConvTranspose2dBlock(Block):
         elif norm == "InstanceNorm2d":
             self.network.add_module(
                 "Norm_layer", nn.InstanceNorm2d(out_channels))
-                
+
         if activation is not None:
             self.network.add_module(
                 "Activation_Layer", self.create_avtivation(activation=activation, out_channels=out_channels, negative_slope=negative_slope, inplace=inplace, bias=bias))
@@ -118,11 +118,11 @@ class UNetBlock(nn.Module):
             return out
 
 
-class ResnetBlock(nn.Module):
+class ResNetBlock(nn.Module):
 
     def __init__(self, in_channels, inner_channels=None, dropout=0.5, norm="BatchNorm2d", activation="PReLu",
                  inner_activation="PReLu", padtype="replicate", mode="BottleNeck", negative_slope=0.0, inner_negative_slope=0.0, inplace=True, bias=True):
-        super(ResnetBlock, self).__init__()
+        super(ResNetBlock, self).__init__()
 
         if inner_channels is None:
             inner_channels = in_channels
@@ -172,3 +172,4 @@ class ResnetBlock(nn.Module):
     def forward(self, x):
         out = self.network(x)
         return out+x
+

@@ -7,18 +7,20 @@ from ..base.container import *
 from ..base.function import *
 
 
+
+
 class UNet(nn.Module):
 
     def __init__(self, in_channels, out_channels, inner_channels, kernel_size, stride=1,
                  padding=0, factor=2, num_inner_layers=3, dropout=0.5, norm="BatchNorm2d", activation="Tanh",
-                 inner_activation="PReLu", padtype="replicate", negative_slope=0.0, inner_negative_slope=0.0, inplace=True,  bias=True):
+                 inner_activation="PReLu", padtype="replicate", inner_network=None, negative_slope=0.0, inner_negative_slope=0.0, inplace=True,  bias=True):
         super(UNet, self).__init__()
         self.networks = []
 
         inner_channels = int(inner_channels*(factor**num_inner_layers))
         self.networks.append(UNetBlock(inner_channels, int(inner_channels/factor),
-                                       kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
-                                       innermost=True, norm=norm, activation=inner_activation, inner_activation=inner_activation, padtype=padtype, negative_slope=inner_negative_slope, inplace=inplace, bias=bias))
+                                    kernel_size=kernel_size, stride=stride, padding=padding, dropout=dropout,
+                                    subblock=inner_network, innermost=True if inner_network is None else False, norm=norm, activation=inner_activation, inner_activation=inner_activation, padtype=padtype, negative_slope=inner_negative_slope, inplace=inplace, bias=bias))
         inner_channels = int(inner_channels/factor)
         for _ in range(num_inner_layers-1):
             self.networks.append(UNetBlock(inner_channels, int(inner_channels/factor),

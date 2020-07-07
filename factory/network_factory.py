@@ -12,7 +12,7 @@ class ConvNetworkFactory(NetworkFactory):
         super(ConvNetworkFactory, self).__init__()
 
         self.exists_model_name = ["ConvNet", "ConvTransposeNet", "UNet", "ResNet",
-                                  "Conv2dBlock", "ConvTranspose2dBlock", "ResnetBlock", "UNetBlock"]
+                                  "Conv2dBlock", "ConvTranspose2dBlock", "ResNetBlock", "UNetBlock"]
 
     def define(self, param, in_channels=None, out_channels=None, subblock=None):
         module_type = param["type"]
@@ -52,7 +52,7 @@ class ConvNetworkFactory(NetworkFactory):
                                     padding=padding, output_padding=output_padding, factor=factor, num_inner_layers=num_inner_layers, dropout=dropout, norm=norm, activation=activation, inner_activation=inner_activation, negative_slope=negative_slope, inner_negative_slope=inner_negative_slope, inplace=inplace, bias=bias)
         elif module_type == "UNet":
             return UNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride=stride,
-                        padding=padding, factor=factor, num_inner_layers=num_inner_layers, dropout=dropout, norm=norm, activation=activation, inner_activation=inner_activation, padtype=padtype, negative_slope=negative_slope, inner_negative_slope=inner_negative_slope, inplace=inplace, bias=bias)
+                        padding=padding, factor=factor, num_inner_layers=num_inner_layers, dropout=dropout, norm=norm, activation=activation, inner_activation=inner_activation, padtype=padtype, inner_network=subblock,negative_slope=negative_slope, inner_negative_slope=inner_negative_slope, inplace=inplace, bias=bias)
         elif module_type == "ResNet":
             return ResNet(sub_in_channels, sub_out_channels, inner_channels, kernel_size, stride=stride,
                           padding=padding, output_padding=output_padding, factor=factor, num_layers=num_layers, num_res_blocks=num_res_blocks, dropout=dropout, norm=norm, activation=activation, inner_activation=inner_activation, padtype=padtype, mode=mode, negative_slope=negative_slope, inner_negative_slope=inner_negative_slope, inplace=inplace, bias=bias)
@@ -76,7 +76,7 @@ class ConvArchitectFactory(BaseArchitectFactory):
         super(ConvArchitectFactory, self).__init__()
         self.conv_network_factory = ConvNetworkFactory()
 
-    def define_network(self, param, in_channels=None, out_channels=None):
+    def define_network(self, param, in_channels=None, out_channels=None, subblock=None):
         result = []
         for key in param.keys():
             id = param[key]["id"]
@@ -84,8 +84,12 @@ class ConvArchitectFactory(BaseArchitectFactory):
             if module_type in self.network_factory.exists_model_name:
                 result.append([id, self.network_factory.define(param[key])])
             elif module_type in self.conv_network_factory.exists_model_name:
-                result.append([id, self.conv_network_factory.define(
-                    param[key], in_channels, out_channels)])
+                if subblock is not None and "subblock" in param[key] and param[key]["subblock"] == True:
+                    result.append([id, self.conv_network_factory.define(
+                        param[key], in_channels, out_channels, subblock)])
+                else:
+                    result.append([id, self.conv_network_factory.define(
+                        param[key], in_channels, out_channels)])
             else:
                 raise RuntimeError("module not exists!")
         result.sort(key=lambda x: x[0])
