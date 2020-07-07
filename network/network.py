@@ -118,7 +118,7 @@ class ResNet(nn.Module):
             ngf = int(ngf*factor)
 
         for i in range(num_res_blocks):
-            self.networks.add_module("ResBlock_%d" % (i), ResnetBlock(ngf, dropout=dropout, norm=norm, activation=inner_activation,
+            self.networks.add_module("ResBlock_%d" % (i), ResNetBlock(ngf, dropout=dropout, norm=norm, activation=inner_activation,
                                                                       inner_activation=inner_activation, padtype=padtype, mode=mode, negative_slope=inner_negative_slope, inplace=inplace,  bias=bias))
             if dropout > 0:
                 self.networks.add_module("Dropout_%d" %
